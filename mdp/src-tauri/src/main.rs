@@ -2,6 +2,9 @@
 use std::sync::{Arc, Mutex};
 use tauri::State;
 
+mod db;
+use db::{insert, call_info};
+
 struct Session {
     authenticated: bool,
 }
@@ -10,7 +13,7 @@ type SharedSession<'a> = State<'a, Arc<Mutex<Session>>>;
 #[tauri::command]
 fn login_backend(session: SharedSession<'_>, password: String) -> bool {
     let mut guard = session.lock().unwrap();
-    guard.authenticated = password == "mdp 1234";
+    guard.authenticated = password == "mdp1234";
     guard.authenticated
 }
 
@@ -22,16 +25,22 @@ fn logout_backend(session: SharedSession<'_>) {
 #[tauri::command]
 fn secure_action(session: SharedSession<'_>) -> Result<String, String> {
     if session.lock().unwrap().authenticated {
-        Ok("secret".into())
+        match call_info() {
+            Ok(data) => Ok(data.to_string()),
+            Err(e) => Err(e),
+        }
     } else {
         Err("unauthorized".into())
     }
 }
 
+
+
+
 fn main() {
   tauri::Builder::default()
     .manage(Arc::new(Mutex::new(Session { authenticated: false })))
-    .invoke_handler(tauri::generate_handler![login_backend, logout_backend, secure_action])
+    .invoke_handler(tauri::generate_handler![login_backend, logout_backend, secure_action, insert])
     .run(tauri::generate_context!())
     .expect("error running app");
 }

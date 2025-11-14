@@ -1,8 +1,61 @@
+
+<script setup lang="ts">
+import { ref } from "vue";
+import { invoke } from "@tauri-apps/api/core";
+import Cookies from "js-cookie";
+import ListMdp from "./components/list_mdp.vue";
+
+const password = ref("");
+const loading = ref(false);
+const error = ref("");
+const secureMessage = ref("");
+const secureError = ref("");
+const isLoggedIn = ref(Cookies.get("isLoggedIn") === "true")
+
+function handleLogout() {
+  // remove persisted cookie and update state
+  Cookies.remove("isLoggedIn");
+  isLoggedIn.value = false;
+  password.value = "";
+}
+
+async function handleLogin() {
+  error.value = "";
+  secureMessage.value = "";
+  secureError.value = "";
+  loading.value = true;
+  try {
+    const result = await invoke<boolean>("login_backend", {
+      password: password.value,
+    });
+
+    if (!result) {
+      // login failed: don't persist cookie
+      Cookies.remove("isLoggedIn");
+      isLoggedIn.value = false;
+      error.value = "Mot de passe incorrect.";
+    } else {
+      // login ok: persist and update state
+      Cookies.set("isLoggedIn", "true", { expires: 1 });
+      isLoggedIn.value = true;
+      error.value = "";
+    }
+  } catch (err) {
+    console.error(err);
+    error.value = "Erreur lors de la tentative de connexion.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+
+</script>
+
 <template>
   <div id="app" class="app">
-    <h1>login Tauri</h1>
+    <h1 id="titre">login Tauri</h1>
 
-    <div v-if="!isAuthenticated" class="card">
+    <div v-if="!isLoggedIn" class="card">
       <p class="hint">
         L’app est mono-utilisateur : entre le mot de passe.
       </p>
@@ -24,20 +77,17 @@
     </div>
 
     <div v-else class="card">
-      <list_mdp />
-      <h2>Bienvenue !</h2>
-      <p>Authentification active dans le backend.</p>
-      <button @click="callSecureAction" :disabled="secureLoading">
-        {{ secureLoading ? "Chargement..." : "Appeler une action sécurisée" }}
-      </button>
-      <p v-if="secureMessage" class="success">{{ secureMessage }}</p>
-      <p v-if="secureError" class="error">{{ secureError }}</p>
-      <button class="secondary" @click="logout">Se déconnecter</button>
-    </div>
+      <list-mdp @logout="handleLogout" />
+    </div> 
   </div>
 </template>
 
 <style>
+body {
+  margin: 0;
+  background: #000000;
+}
+
 .app {
   display: flex;
   flex-direction: column;
@@ -47,8 +97,15 @@
   min-height: 100vh;
   padding: 32px;
   font-family: system-ui, sans-serif;
-  background: radial-gradient(circle at top, #f0f4ff, #d7e0ff);
+  background: radial-gradient(circle at top, #0c0d0f, #585944);
+  color: white;
 }
+
+#titre {
+  color: white;
+  font-size: 32px;
+  margin-bottom: 16px;
+} 
 
 .card {
   width: min(400px, 100%);
@@ -59,6 +116,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+
+  background: radial-gradient(circle at 50%, #0c0d0f, #676B4A);
 }
 
 .form {
@@ -71,7 +130,6 @@ label {
   display: flex;
   flex-direction: column;
   font-weight: 600;
-  color: #1e2a4a;
   gap: 4px;
 }
 
@@ -84,7 +142,7 @@ input {
 }
 
 input:focus {
-  outline: 2px solid #4c6ef5;
+  outline: 2px solid #000000;
   outline-offset: 1px;
 }
 
@@ -94,7 +152,7 @@ button {
   border: none;
   font-weight: 600;
   cursor: pointer;
-  background: #4c6ef5;
+  background: #47422A;
   color: white;
   transition: background 0.2s ease;
 }
@@ -106,7 +164,7 @@ button:disabled {
 
 button.secondary {
   background: #e2e8f0;
-  color: #1e2a4a;
+  color: #ffffff;
 }
 
 .error {
@@ -115,12 +173,12 @@ button.secondary {
 }
 
 .success {
-  color: #2f855a;
+  color: #ffffff;
   font-size: 14px;
 }
 
 .hint {
   font-size: 14px;
-  color: #425b8a;
+  color: #ffffff;
 }
 </style>
