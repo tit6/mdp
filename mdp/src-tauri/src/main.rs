@@ -5,6 +5,8 @@ use tauri::State;
 mod db;
 use db::{insert, call_info};
 
+mod chiffrement;
+
 struct Session {
     authenticated: bool,
 }
@@ -12,6 +14,18 @@ type SharedSession<'a> = State<'a, Arc<Mutex<Session>>>;
 
 #[tauri::command]
 fn login_backend(session: SharedSession<'_>, password: String) -> bool {
+    let salt: Vec<u8> = vec![
+    1, 2, 3, 4, 5, 6, 7, 8,
+    9, 10, 11, 12, 13, 14, 15, 16
+];
+    let t = chiffrement::kdf("coucou", &salt);
+    match t {
+        Ok(u) => println!("{:?}", u),
+        Err(err) => println!("{:?}", err),
+
+    }
+    println!("{:?}", t);
+
     let mut guard = session.lock().unwrap();
     guard.authenticated = password == "mdp1234";
     guard.authenticated

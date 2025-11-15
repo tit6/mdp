@@ -89,6 +89,7 @@ async function logout() {
   padding: 10px;
   margin-bottom: 10px;
   text-align: center;
+  width: 300px;
 }
 
 .main {
