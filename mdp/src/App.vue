@@ -10,7 +10,7 @@ const loading = ref(false);
 const error = ref("");
 const secureMessage = ref("");
 const secureError = ref("");
-const isLoggedIn = ref(Cookies.get("isLoggedIn") === "true")
+const isLoggedIn = ref(Cookies.get("isLoggedIn") === "false")
 
 function handleLogout() {
   // remove persisted cookie and update state
