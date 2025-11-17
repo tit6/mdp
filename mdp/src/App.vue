@@ -4,6 +4,15 @@ import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import Cookies from "js-cookie";
 import ListMdp from "./components/list_mdp.vue";
+import { listen } from '@tauri-apps/api/event';
+
+listen('tauri://close-requested', async () => {
+  try {
+    await invoke("logout_backend");
+  } catch (err) {
+    console.error('Erreur lors du logout backend', err);
+  }
+});
 
 const password = ref("");
 const loading = ref(false);
