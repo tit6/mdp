@@ -1,6 +1,7 @@
 use rusqlite::Connection;
 use serde_json::{json};
 
+use crate::chiffrement::chiffrement_mdp;
 
 pub fn call_info() -> Result<String, String> {
      println!(
@@ -37,6 +38,8 @@ pub fn call_info() -> Result<String, String> {
 #[tauri::command]
 pub fn insert(site: &str, mdp:&str) -> Result<bool, String> {
     println!("Insertion de site: {}, mdp: {}", site, mdp);
+    let mdpChiffre = chiffrement_mdp(mdp).unwrap();
+    println!("mdp chiffré: {}", mdpChiffre);
 
     let conn = Connection::open("db.sqlite").map_err(|e| e.to_string())?;
 
@@ -47,7 +50,7 @@ pub fn insert(site: &str, mdp:&str) -> Result<bool, String> {
 
         conn.execute(
             "INSERT INTO mdp_liste (site, password) VALUES (?1, ?2)",
-            &[site, mdp],
+            &[site, &mdpChiffre],
         )
         .map_err(|e| e.to_string())?;
     }
@@ -56,4 +59,20 @@ pub fn insert(site: &str, mdp:&str) -> Result<bool, String> {
 
 
 
+#[tauri::command]
+pub fn supprimer(id: &str) -> Result<bool, String> {
+    println!("suppression de id : {}", id);
+    
+    let conn = Connection::open("db.sqlite").map_err(|e| e.to_string())?;
 
+    if id.is_empty() {
+        println!("id est vide explique?");
+        return Err("please enter arguments".into())
+    } else {
+        conn.execute("
+            DELETE FROM mdp_liste WHERE id = ?1", [id]).map_err(|e| e.to_string())?;
+    }
+
+    Ok(true)
+
+}

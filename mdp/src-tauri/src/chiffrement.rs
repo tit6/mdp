@@ -156,8 +156,12 @@ pub fn decrypted_db(key : [u8; 32]) -> Result<(), Box<dyn std::error::Error>>  {
     let mut output = File::create("db.sqlite")?;
     let mut writer = BufWriter::new(output);
 
-    writer.write_all(&decrypt.unwrap())?;
+    match decrypt {
+        Ok(d) => writer.write_all(&d)?,
+        Err(e) => return Err(e.into()),
+    }
 
+    //writer.write_all(&decrypt.unwrap())?;
     writer.flush()?;
 
     Ok(())
@@ -209,10 +213,7 @@ pub fn derivation(password: String) -> bool{
     }
 }
 
-
-
-
-// executer quand on a perdu le db enc
+// executer quand on a perdu le db enc fonction destiner à être supprimer
 pub fn encrypted_db_temp() -> Result<(), Box<dyn std::error::Error>>  {
     let mut file = File::open("db.sqlite")?;
     let mut buffer = Vec::new();
@@ -243,4 +244,34 @@ pub fn encrypted_db_temp() -> Result<(), Box<dyn std::error::Error>>  {
 
 
     Ok(())
+}
+
+pub fn chiffrement_mdp(password:&str) -> Result<String, Box<dyn std::error::Error>> {
+    let db_key : [u8; 32] =  get_password_key().unwrap();
+
+    let temp_mdp = encrypt_password(&db_key, password.as_bytes());
+    
+    match temp_mdp {
+        Ok(enc) => {
+            
+
+           let mdp = enc
+            .nonce
+            .iter()
+            .chain(enc.ciphertext.iter())
+            .map(|b| format!("{:02x}", b))
+            .collect::<String>();
+
+            println!("mdp chiffré hex : {}", mdp);
+
+            return Ok(mdp);
+
+
+        },
+        Err(err) => {
+            println!("encrypt error : {:?}", err);
+            return Err(err.into());
+        }
+    }
+
 }

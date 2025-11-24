@@ -52,6 +52,18 @@ async function logout() {
   secureMessage.value = "";
   secureError.value = "";
 }
+
+async function supprimer(id: number) {
+  console.log(id);
+  const result = await invoke<boolean>("supprimer", {id: String(id),});
+
+  if (!result) {
+    console.error("Erreur lors de la suppression des données.");
+  } else {
+    console.log("Données supprimer avec succès.");
+    call_mdp();
+  }
+}
 </script>
 
 
@@ -73,6 +85,7 @@ async function logout() {
     <p v-if="secureMessage" class="success">
       <div v-for="(item, i) in secureMessage" :key="i" class="box">
           <p><strong>id :</strong> {{ item.id }}</p>
+          <button @click="supprimer(item.id)">supprimer</button>
           <p>{{ item.url }}</p>
           <p><strong>Mot de passe :</strong> {{ item.mdp }}</p>
       </div>

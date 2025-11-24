@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use tauri::State;
 
 mod db;
-use db::{insert, call_info};
+use db::{insert, call_info, supprimer};
 
 mod chiffrement;
 use chiffrement::EncryptedPassword;
@@ -35,11 +35,13 @@ fn secure_action(session: SharedSession<'_>) -> Result<String, String> {
     if session.lock().unwrap().authenticated {
         match call_info() {
             Ok(data) => Ok(data.to_string()),
-            Err(e) => Err(e),
+            Err(e) => Err(e.into()),
         }
     } else {
         Err("unauthorized".into())
     }
+
+
 }
 
 
@@ -48,7 +50,7 @@ fn secure_action(session: SharedSession<'_>) -> Result<String, String> {
 fn main() {
   tauri::Builder::default()
     .manage(Arc::new(Mutex::new(Session { authenticated: false })))
-    .invoke_handler(tauri::generate_handler![login_backend, logout_backend, secure_action, insert])
+    .invoke_handler(tauri::generate_handler![login_backend, logout_backend, secure_action, insert, supprimer])
     .run(tauri::generate_context!())
     .expect("error running app");
 }
