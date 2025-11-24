@@ -275,3 +275,28 @@ pub fn chiffrement_mdp(password:&str) -> Result<String, Box<dyn std::error::Erro
     }
 
 }
+
+pub fn dechiffrement_mdp(mdp_chiffre:String) -> Result<String, Box<dyn std::error::Error>> {
+    let db_key : [u8; 32] =  get_password_key().unwrap();
+
+    let bytes = (0..mdp_chiffre.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&mdp_chiffre[i..i + 2], 16))
+        .collect::<Result<Vec<u8>, _>>()?;
+
+    if bytes.len() < 12 {
+        return Err("Données chiffrées trop courtes".into());
+    }
+
+    let mut nonce = [0u8; 12];
+    nonce.copy_from_slice(&bytes[..12]);
+    let ciphertext = bytes[12..].to_vec();
+
+    let enc = EncryptedPassword { nonce, ciphertext };
+
+    let decrypted_bytes = decrypt_password(&db_key, &enc)?;
+
+    let decrypted_password = String::from_utf8(decrypted_bytes)?;
+
+    Ok(decrypted_password)
+}

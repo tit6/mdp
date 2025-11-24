@@ -2,6 +2,8 @@ use rusqlite::Connection;
 use serde_json::{json};
 
 use crate::chiffrement::chiffrement_mdp;
+use crate::chiffrement::dechiffrement_mdp;
+
 
 pub fn call_info() -> Result<String, String> {
      println!(
@@ -19,7 +21,7 @@ pub fn call_info() -> Result<String, String> {
             Ok(json!({
                 "id": row.get::<_, i32>(0)?,
                 "url": row.get::<_, String>(1)?,
-                "mdp": row.get::<_, String>(2)?,
+                "mdp": dechiffrement_mdp(row.get::<_, String>(2).unwrap()).unwrap_or("Erreur de déchiffrement".to_string()),
             }))
         })
         .map_err(|e| e.to_string())?;

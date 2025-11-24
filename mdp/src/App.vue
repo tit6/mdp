@@ -57,6 +57,10 @@ async function handleLogin() {
   }
 }
 
+async function newDB() {
+  console.log("newDB");
+  
+}
 
 </script>
 
@@ -88,6 +92,9 @@ async function handleLogin() {
     <div v-else class="card">
       <list-mdp @logout="handleLogout" />
     </div> 
+
+    <button @click="newDB">New DB</button>
+    <input v-model="password" type="text" placeholder="Nouveau mot de passe" />
   </div>
 </template>
 
