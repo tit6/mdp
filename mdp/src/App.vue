@@ -15,8 +15,10 @@ listen('tauri://close-requested', async () => {
 });
 
 const password = ref("");
+const NewPassword = ref("");
 const loading = ref(false);
 const error = ref("");
+const error_new_db = ref("");
 const secureMessage = ref("");
 const secureError = ref("");
 const isLoggedIn = ref(Cookies.get("isLoggedIn") === "false")
@@ -59,7 +61,24 @@ async function handleLogin() {
 
 async function newDB() {
   console.log("newDB");
-  
+  console.log(NewPassword.value);
+
+  try {
+    const result_new_db = await invoke<boolean>("creat_db", {
+      password: NewPassword.value,
+    });
+
+    if (!result_new_db) {
+      error_new_db.value = "Probleme dans la création de la nouvelle base de données.";
+    } else {
+      error_new_db.value = "";
+    }
+  } catch (err) {
+    console.error(err);
+    error_new_db.value = "Erreur lors de la création de la nouvelle base de données.";
+  } finally {
+    loading.value = false;
+  }
 }
 
 </script>
@@ -94,7 +113,7 @@ async function newDB() {
     </div> 
 
     <button @click="newDB">New DB</button>
-    <input v-model="password" type="text" placeholder="Nouveau mot de passe" />
+    <input v-model="NewPassword" type="text" placeholder="Nouveau mot de passe" />
   </div>
 </template>
 

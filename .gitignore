@@ -5,3 +5,4 @@ dist
 .env.local
 .env.*.local
 db.sqlite
+encrypted_db.sqlite

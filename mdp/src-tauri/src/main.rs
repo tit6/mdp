@@ -6,7 +6,7 @@ mod db;
 use db::{insert, call_info, supprimer};
 
 mod chiffrement;
-use chiffrement::EncryptedPassword;
+use chiffrement::{EncryptedPassword, new_db};
 
 struct Session {
     authenticated: bool,
@@ -44,13 +44,19 @@ fn secure_action(session: SharedSession<'_>) -> Result<String, String> {
 
 }
 
+#[tauri::command]
+fn creat_db(password: String) -> bool {
+    chiffrement::new_db(password);
+    true
+}
+
 
 
 
 fn main() {
   tauri::Builder::default()
     .manage(Arc::new(Mutex::new(Session { authenticated: false })))
-    .invoke_handler(tauri::generate_handler![login_backend, logout_backend, secure_action, insert, supprimer])
+    .invoke_handler(tauri::generate_handler![login_backend, logout_backend, secure_action, insert, supprimer, creat_db])
     .run(tauri::generate_context!())
     .expect("error running app");
 }

@@ -8,6 +8,7 @@ use aes_gcm::{
     Key, Nonce,
 };
 use rand::RngCore;
+use rand::Rng;
 
 use std::fs::File;
 use std::io::prelude::*;
@@ -299,4 +300,51 @@ pub fn dechiffrement_mdp(mdp_chiffre:String) -> Result<String, Box<dyn std::erro
     let decrypted_password = String::from_utf8(decrypted_bytes)?;
 
     Ok(decrypted_password)
+}
+
+pub fn new_db(password:String) -> Result<String, Box<dyn std::error::Error>> {
+    // créer une nouvelle base de données SQLite vide
+    let conn = rusqlite::Connection::open("db.sqlite")?;
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS mdp_liste (
+                  id INTEGER PRIMARY KEY,
+                  site TEXT NOT NULL,
+                  password TEXT NOT NULL
+                  )",
+        [],
+    )?;
+
+    let salt: Vec<u8> = vec![
+    1, 2, 3, 4, 5, 6, 7, 8,
+    9, 10, 11, 12, 13, 14, 15, 16
+    ];
+
+    let t = kdf(&password, &salt);
+    match t {
+        Ok(u) => println!("{:?}", u),
+        Err(err) => println!("{:?}", err),
+
+    }
+    let hkdf_salt: Vec<u8> = vec![
+    1, 2, 3, 4, 5, 6, 7, 8,
+    9, 10, 11, 12, 13, 14, 15, 16
+    ];
+
+    let db_key : [u8; 32] = hkdf(&t.unwrap(), &hkdf_salt, b"bdb");
+    let hkdf_password : [u8; 32] = hkdf(&t.unwrap(), &hkdf_salt, b"hkdf password");
+
+    let keys = Authpass {
+        db: db_key,
+        password: hkdf_password,
+    };
+
+    // On stocke globalement
+    set_auth_keys(keys);
+
+    println!("key db : {:?}", db_key);
+    println!("key password : {:?}", hkdf_password);
+
+    encrypted_db()?;
+    Ok("Base de données créée avec succès".to_string())
+
 }
